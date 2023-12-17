@@ -2,7 +2,7 @@ import fpdf
 import pypdf
 import pandas as pd
 import sys
-from common import *
+import os
 
 
 if len(sys.argv) > 1:
@@ -10,29 +10,44 @@ if len(sys.argv) > 1:
 else:
     CSV = 'reg.csv'
 
+CWD = os.getcwd()
+TMP = os.path.join(CWD, 'tmp')
+OUTPUT = os.path.join(CWD, 'output')
+
+
+if not os.path.exists(TMP):
+    os.mkdir(TMP)
+
+if not os.path.exists(OUTPUT):
+    os.mkdir(OUTPUT)
+
 
 TEMPLATE_PDF = os.path.join(CWD, 'templates/template_tag.pdf')
 TAG_PDF = os.path.join(OUTPUT, 'tag_competitor.pdf')
 NAME_CSV = os.path.join(CWD, CSV)
 NAME_PDF = os.path.join(TMP, 'names_tag.pdf')
 
-CENTER_X = 30
-ID_Y = 300
-NAME_Y = ID_Y + 120
-FOREIGN_NAME_Y = NAME_Y + 90
+CENTER_X = 30 # center of the page
+ID_Y = 110 # y of competitor id
+NAME_Y = ID_Y + 50 # y of competitor name
+FOREIGN_NAME_Y = NAME_Y + 35 # y of competitor's non-english name
 
-EVENT_X = 135
-EVENT_Y = 680
-ID_SIZE = 100
-FONT_SIZE = 60
+EVENT_X = 38 # x of the first event icon
+EVENT_Y = 250 # y of the first event icon
+ID_SIZE = 40 # font size of competitor id
+FONT_SIZE = 25 # default font size of competitor name
 
 SHOW_EVENT = True
-ICON_SIZE = 40
+DOUBLE_SIDE = True
+ICON_SIZE = 15 # width of event icons
+SPACE = 7 # horizontal space between event icons
+VERTICAL_SPACE = 7 # line space between event icons
+TEMPLATE_SIZE = (266,379) # size of the tag template pdf
 
 ALL_FONTS = os.listdir(os.path.join(CWD, 'fonts'))
 
 
-pdf = fpdf.FPDF(format=(709,1001), unit='pt')
+pdf = fpdf.FPDF(format=TEMPLATE_SIZE, unit='pt')
 
 
 for font in ALL_FONTS:
@@ -48,11 +63,45 @@ ICONS = ['333', '222', '444', '555', '666', '777',
          '444bf', '555bf', '333mbf']
 
 
-def reduce_font_size(long_name):
-    if len(long_name) <= 18:
-        return 0
+def get_font(region):
+    if 'Hong Kong' in region \
+        or 'Taipei' in region \
+        or 'Taiwan' in region \
+        or 'Macau' in region:
+        font = 'NotoSansTC-Bold'
+    elif 'Korea' in region:
+        font = 'NotoSansKR-Bold'
+    elif 'Japan' in region:
+        font = 'NotoSansJP-Bold'
+    elif 'Thailand' in region:
+        font = 'NotoSansThai-Bold'
     else:
-        return len(long_name) - 5
+        font = 'NotoSansSC-Bold'
+    return font
+
+
+def get_name(name):
+    foreign_start = name.find('(')
+
+    if foreign_start != -1:
+        english_name = name[:foreign_start].strip()
+        foreign_name = name[foreign_start:]
+    else:
+        english_name = name
+        foreign_name = None
+    
+    return english_name, foreign_name
+
+
+def adjust_font_size(long_name, default_size):
+    if len(long_name) <= 18:
+        return default_size
+    elif 25 <= len(long_name) < 30:
+        return default_size - 10
+    elif len(long_name) >= 30:
+        return default_size - 15
+    else:
+        return default_size + 15 - len(long_name)
 
 
 for i, row in names.iterrows():
@@ -63,7 +112,7 @@ for i, row in names.iterrows():
 
     font = get_font(region)
     english_name, foreign_name = get_name(name)
-    s = reduce_font_size(english_name)
+    adjusted_font_size = adjust_font_size(english_name, FONT_SIZE)
 
 
     pdf.add_page()
@@ -74,15 +123,15 @@ for i, row in names.iterrows():
 
 
     if foreign_name:
-        pdf.set_font(family=font, size=FONT_SIZE-s)
+        pdf.set_font(family=font, size=adjusted_font_size)
         pdf.set_xy(CENTER_X, NAME_Y)
         pdf.cell(0, text=english_name, align='C')
 
-        pdf.set_font(family=font, size=FONT_SIZE-s)
+        pdf.set_font(family=font, size=adjusted_font_size)
         pdf.set_xy(CENTER_X, FOREIGN_NAME_Y)
         pdf.cell(0, text=foreign_name, align='C')
     else:
-        pdf.set_font(family=font, size=FONT_SIZE-s)
+        pdf.set_font(family=font, size=adjusted_font_size)
         pdf.set_xy(CENTER_X, NAME_Y+20)
         pdf.cell(0, text=english_name, align='C')
 
@@ -92,13 +141,13 @@ for i, row in names.iterrows():
         for icon in ICONS[:9]:
             color = 'black' if row[icon] == 1 else 'white'
             pdf.image('icons_{}/{}.svg'.format(color,icon), x=icon_x, y=EVENT_Y, w=ICON_SIZE)
-            icon_x += ICON_SIZE + 10
+            icon_x += ICON_SIZE + SPACE
         
-        icon_x = EVENT_X + (ICON_SIZE + 10) / 2
+        icon_x = EVENT_X + (ICON_SIZE + SPACE) / 2
         for icon in ICONS[9:]:
             color = 'black' if row[icon] == 1 else 'white'
-            pdf.image('icons_{}/{}.svg'.format(color,icon), x=icon_x, y=EVENT_Y+ICON_SIZE+20, w=ICON_SIZE)
-            icon_x += ICON_SIZE + 10
+            pdf.image('icons_{}/{}.svg'.format(color,icon), x=icon_x, y=EVENT_Y+ICON_SIZE+VERTICAL_SPACE, w=ICON_SIZE)
+            icon_x += ICON_SIZE + SPACE
     
     # back
     pdf.add_page()
@@ -109,15 +158,15 @@ for i, row in names.iterrows():
 
 
     if foreign_name:
-        pdf.set_font(family=font, size=FONT_SIZE-s)
+        pdf.set_font(family=font, size=adjusted_font_size)
         pdf.set_xy(CENTER_X, NAME_Y)
         pdf.cell(0, text=english_name, align='C')
 
-        pdf.set_font(family=font, size=FONT_SIZE-s)
+        pdf.set_font(family=font, size=adjusted_font_size)
         pdf.set_xy(CENTER_X, FOREIGN_NAME_Y)
         pdf.cell(0, text=foreign_name, align='C')
     else:
-        pdf.set_font(family=font, size=FONT_SIZE-s)
+        pdf.set_font(family=font, size=adjusted_font_size)
         pdf.set_xy(CENTER_X, NAME_Y+20)
         pdf.cell(0, text=english_name, align='C')
 
@@ -135,6 +184,7 @@ for name_page in name_pdf.pages:
     template_page = template_pdf.pages[i]
     template_page.merge_page(name_page)
     tag_pdf.add_page(template_page)
-    i = 1 - i
+    if DOUBLE_SIDE:
+        i = 1 - i
 
 tag_pdf.write(open(TAG_PDF, 'wb'))

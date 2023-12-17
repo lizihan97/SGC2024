@@ -1,11 +1,12 @@
 import fpdf
 import pypdf
-from common import *
+import common
+import os
 
 
-TEMPLATE_PDF = os.path.join(CWD, 'templates/template_medal.pdf')
-MEDAL_PDF = os.path.join(OUTPUT, 'medal.pdf')
-AWARD_PDF = os.path.join(TMP, 'awards.pdf')
+TEMPLATE_PDF = os.path.join(common.CWD, 'templates/template_medal.pdf')
+MEDAL_PDF = os.path.join(common.OUTPUT, 'medal.pdf')
+AWARD_PDF = os.path.join(common.TMP, 'awards.pdf')
 
 CENTER_X = 30
 EVENT_Y = 400
@@ -18,12 +19,12 @@ FONT = 'Alegreya-Bold'
 
 
 pdf = fpdf.FPDF(format=(810,810), unit='pt')
-pdf.add_font(fname=os.path.join(CWD, 'fonts/{}.otf'.format(FONT)))
+pdf.add_font(fname=os.path.join(common.CWD, 'fonts/{}.otf'.format(FONT)))
 
 
-for rank in RANKS:
-    for cat in CATS:
-        for event in EVENTS:
+for rank in common.RANKS:
+    for cat in common.CATS:
+        for event in common.EVENTS:
             pdf.add_page()
             pdf.set_font(family=FONT, size=FONT_SIZE)
 
