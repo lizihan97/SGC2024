@@ -2,7 +2,8 @@ import fpdf
 import pypdf
 import pandas as pd
 import sys
-from common import *
+import common
+import os
 
 
 if len(sys.argv) > 1:
@@ -11,10 +12,10 @@ else:
     CSV = 'reg.csv'
 
 
-TEMPLATE_PDF = os.path.join(CWD, 'templates/template_cop.pdf')
-COP_PDF = os.path.join(OUTPUT, 'cert_cop.pdf')
-NAME_CSV = os.path.join(CWD, CSV)
-NAME_PDF = os.path.join(TMP, 'names_cop.pdf')
+TEMPLATE_PDF = os.path.join(common.CWD, 'templates/template_cop.pdf')
+COP_PDF = os.path.join(common.OUTPUT, 'cert_cop.pdf')
+NAME_CSV = os.path.join(common.CWD, CSV)
+NAME_PDF = os.path.join(common.TMP, 'names_cop.pdf')
 
 CENTER_X = 30
 NAME_Y = 350
@@ -23,7 +24,7 @@ ENGLISH_NAME_Y = NAME_Y - 30
 FOREIGN_NAME_Y = NAME_Y + 20
 SMALL_FONT_SIZE = 35
 
-ALL_FONTS = os.listdir(os.path.join(CWD, 'fonts'))
+ALL_FONTS = os.listdir(os.path.join(common.CWD, 'fonts'))
 ENGLISH_FONT = 'Amaranth-Bold'
 
 
@@ -31,7 +32,7 @@ pdf = fpdf.FPDF(format='A4', unit='pt')
 
 
 for font in ALL_FONTS:
-    pdf.add_font(fname=os.path.join(CWD, 'fonts', font))
+    pdf.add_font(fname=os.path.join(common.CWD, 'fonts', font))
 
 
 names = pd.read_csv(NAME_CSV)
@@ -53,8 +54,8 @@ for i, row in names.iterrows():
     pdf.add_page()
 
 
-    font = get_font(region)
-    english_name, foreign_name = get_name(name)
+    font = common.get_font(region)
+    english_name, foreign_name = common.get_name(name)
     s = reduce_font_size(english_name)
 
 

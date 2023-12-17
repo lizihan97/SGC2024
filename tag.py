@@ -2,7 +2,8 @@ import fpdf
 import pypdf
 import pandas as pd
 import sys
-from common import *
+import common
+import os
 
 
 if len(sys.argv) > 1:
@@ -11,32 +12,34 @@ else:
     CSV = 'reg.csv'
 
 
-TEMPLATE_PDF = os.path.join(CWD, 'templates/template_tag.pdf')
-TAG_PDF = os.path.join(OUTPUT, 'tag_competitor.pdf')
-NAME_CSV = os.path.join(CWD, CSV)
-NAME_PDF = os.path.join(TMP, 'names_tag.pdf')
+TEMPLATE_PDF = os.path.join(common.CWD, 'templates/template_tag.pdf')
+TAG_PDF = os.path.join(common.OUTPUT, 'tag_competitor.pdf')
+NAME_CSV = os.path.join(common.CWD, CSV)
+NAME_PDF = os.path.join(common.TMP, 'names_tag.pdf')
 
 CENTER_X = 30
-ID_Y = 300
-NAME_Y = ID_Y + 120
-FOREIGN_NAME_Y = NAME_Y + 90
+ID_Y = 110
+NAME_Y = ID_Y + 50
+FOREIGN_NAME_Y = NAME_Y + 35
 
-EVENT_X = 135
-EVENT_Y = 680
-ID_SIZE = 100
-FONT_SIZE = 60
+EVENT_X = 38
+EVENT_Y = 250
+ID_SIZE = 40
+FONT_SIZE = 25
 
 SHOW_EVENT = True
-ICON_SIZE = 40
+ICON_SIZE = 15
+SPACE = 7
+VERTICAL_SPACE = 7
 
-ALL_FONTS = os.listdir(os.path.join(CWD, 'fonts'))
+ALL_FONTS = os.listdir(os.path.join(common.CWD, 'fonts'))
 
 
-pdf = fpdf.FPDF(format=(709,1001), unit='pt')
+pdf = fpdf.FPDF(format=(266,379), unit='pt')
 
 
 for font in ALL_FONTS:
-    pdf.add_font(fname=os.path.join(CWD, 'fonts', font))
+    pdf.add_font(fname=os.path.join(common.CWD, 'fonts', font))
 
 
 names = pd.read_csv(NAME_CSV)
@@ -51,8 +54,12 @@ ICONS = ['333', '222', '444', '555', '666', '777',
 def reduce_font_size(long_name):
     if len(long_name) <= 18:
         return 0
+    elif len(long_name) >= 30:
+        return 15
+    elif len(long_name) >= 25:
+        return 10
     else:
-        return len(long_name) - 5
+        return len(long_name) - 15
 
 
 for i, row in names.iterrows():
@@ -61,8 +68,8 @@ for i, row in names.iterrows():
     region = row['Region']
 
 
-    font = get_font(region)
-    english_name, foreign_name = get_name(name)
+    font = common.get_font(region)
+    english_name, foreign_name = common.get_name(name)
     s = reduce_font_size(english_name)
 
 
@@ -92,13 +99,13 @@ for i, row in names.iterrows():
         for icon in ICONS[:9]:
             color = 'black' if row[icon] == 1 else 'white'
             pdf.image('icons_{}/{}.svg'.format(color,icon), x=icon_x, y=EVENT_Y, w=ICON_SIZE)
-            icon_x += ICON_SIZE + 10
+            icon_x += ICON_SIZE + SPACE
         
-        icon_x = EVENT_X + (ICON_SIZE + 10) / 2
+        icon_x = EVENT_X + (ICON_SIZE + SPACE) / 2
         for icon in ICONS[9:]:
             color = 'black' if row[icon] == 1 else 'white'
-            pdf.image('icons_{}/{}.svg'.format(color,icon), x=icon_x, y=EVENT_Y+ICON_SIZE+20, w=ICON_SIZE)
-            icon_x += ICON_SIZE + 10
+            pdf.image('icons_{}/{}.svg'.format(color,icon), x=icon_x, y=EVENT_Y+ICON_SIZE+VERTICAL_SPACE, w=ICON_SIZE)
+            icon_x += ICON_SIZE + SPACE
     
     # back
     pdf.add_page()
